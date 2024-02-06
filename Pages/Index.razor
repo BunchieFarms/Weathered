@@ -1,12 +1,13 @@
 ﻿@page "/"
 @using Weathered.Data;
+@using Weathered.Models;
 @using System.Text.Json;
 @inject WeatheredService _ws;
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 <div Class="d-flex gap-1 pa-4" style="max-width: 500px;margin:0px auto">
     <MudTextField @bind-Value:get="LocationInput" @bind-Value:set="(value) => { LocationInput = value.Trim(); }" Label="Enter a Location" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SubmitLocation">Submit</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled=loading OnClick="SubmitLocation">Submit</MudButton>
 </div>
 
 @if (loading)
