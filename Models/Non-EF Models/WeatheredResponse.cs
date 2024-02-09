@@ -11,10 +11,10 @@ namespace Weathered.Models
         public readonly List<DaySummary> DaySummaries = new List<DaySummary>();
         public WeatheredResponse()
         {
-            StationName = "Geocoding Failed.";
+            StationName = "Unable to find a station close to that location, please try again.";
             StationLocId = -1;
-            Lat = -1;
-            Lon = -1;
+            Lat = -200;
+            Lon = -200;
             DaySummaries = new List<DaySummary>();
         }
         public WeatheredResponse(StationLoc station, DateTime locationDateTime)

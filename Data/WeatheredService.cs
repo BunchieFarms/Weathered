@@ -49,7 +49,7 @@ namespace Weathered.Data
         public Datum[] GetHistoricalForecast(float lat, float lon, DateOnly date)
         {
             var secondsAgo = (DateTime.Now.Date - date.ToDateTime(TimeOnly.MinValue).Date).TotalDays * 86400;
-            string reqStr = $"https://api.pirateweather.net/forecast/{_config["PirateApiKey"]}/{lat},{lon},-{secondsAgo}?exclude=minutely,alerts,currently,hourly&units=us";
+            string reqStr = $"https://api.pirateweather.net/forecast/{_config["PirateApiKey"]}/{lat},{lon},{(secondsAgo == 0 ? null : secondsAgo * -1)}?exclude=minutely,alerts,currently,hourly&units=us";
             var apiResponse = _client.GetFromJsonAsync<PirateForecastResponse>(reqStr);
             return apiResponse.Result.daily.data;
         }

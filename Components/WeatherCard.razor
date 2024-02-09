@@ -1,0 +1,30 @@
+﻿@using Weathered.Models;
+
+<MudCard Style="@GetCardBGColor(day)" Class="d-flex ma-4 flex-grow-1 justify-content-center">
+    <MudCardContent Style="text-align:center">
+        <MudText>@day.Date</MudText>
+        <MudText>@day.Date.DayOfWeek</MudText>
+        <MudText Typo="Typo.body2">@GetDayRain(day)</MudText>
+        <MudText Typo="Typo.body2">@GetDayTemp(day)</MudText>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter]
+    public DaySummary day { get; set; }
+
+    private string GetCardBGColor(DaySummary day)
+    {
+        return day.isForecast ? "background-color:rgba(255,152,0,.25)" : "background-color:rgba(89,74,226,.25)";
+    }
+
+    private string GetDayRain(DaySummary day)
+    {
+        return day.Prcp == 0 ? "no rain" : day.Prcp < .25f ? "<.25 in rain" : $"{(day.Prcp).ToString("#.##")} in rain";
+    }
+
+    private string GetDayTemp(DaySummary day)
+    {
+        return day.isForecast ? $"{Math.Round(day.Temp)} max temp" : $"{Math.Round(day.Temp)} avg temp";
+    }
+}
