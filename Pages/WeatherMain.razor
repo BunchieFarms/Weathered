@@ -7,7 +7,7 @@
 @inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 <div Class="d-flex gap-1 pa-4" style="max-width: 500px;margin:0px auto">
-    <MudTextField @bind-Value:get="LocationInput" @bind-Value:set="(value) => { LocationInput = value.Trim(); }" Label="Enter a Location" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
+    <MudTextField @bind-Value="LocationInput" Label="Enter a Location" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
     <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled=loading OnClick="SubmitLocation">Submit</MudButton>
 </div>
 
@@ -46,12 +46,13 @@
 
     private async Task SubmitLocation()
     {
-        if (LocationInput != lastInput)
+        string trimmedInput = LocationInput.Trim();
+        if (trimmedInput != lastInput)
         {
             loading = true;
             response = null;
-            lastInput = LocationInput;
-            response = await _ws.GetWeatheredResponse(LocationInput);
+            lastInput = trimmedInput;
+            response = await _ws.GetWeatheredResponse(trimmedInput);
             if (response.StationLocId > 0)
             {
                 var needHistoricalForecast = response.DaySummaries.Where(x => x.isForecast).ToList();
