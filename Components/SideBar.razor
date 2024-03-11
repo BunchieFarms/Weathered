@@ -1,5 +1,67 @@
-﻿<h3>SideBar</h3>
+﻿@using System.Text.Json
+@using Weathered.Models
+@using Weathered.Services
+@inject NotifierService _notifier;
+@inject Blazored.LocalStorage.ILocalStorageService localStorage;
+
+<MudNavMenu>
+    <MudPaper Width="100%">
+        <MudList Clickable="true">
+            <MudListSubheader>
+                Favorite Stations
+            </MudListSubheader>
+
+            @foreach (LocalFavorites fav in localFavorites)
+            {
+                <MudListItem OnClick="() => SelectFavorite(fav)" Icon="@Icons.Material.Filled.Inbox">@fav.stationName | @fav.stationLocId</MudListItem>
+            }
+        </MudList>
+    </MudPaper>
+    <div Class="ma-4" Style="text-align:center">
+        <a Style="color:blue" href="http://bryceohmer.com">bryceohmer.com</a>
+    </div>
+    
+</MudNavMenu>
 
 @code {
+    List<LocalFavorites> localFavorites = new List<LocalFavorites>();
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        var history = await localStorage.GetItemAsync<List<LocalFavorites>>("localFavorites");
+        if (history == null)
+        {
+            await localStorage.SetItemAsync<List<LocalFavorites>>("localFavorites", new List<LocalFavorites>());
+        }
+        else
+        {
+            _notifier.AllLocalFavorites = history;
+        }
+        localFavorites = _notifier.AllLocalFavorites;
+    }
+
+    private async Task SelectFavorite(LocalFavorites favorite)
+    {
+        _notifier.SelectedFavoriteStation = favorite;
+    }
+
+    public async Task OnUpdateFavorites()
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+
+    protected override void OnInitialized()
+    {
+        _notifier.UpdateFavorites += OnUpdateFavorites;
+    }
+
+
+    public void Dispose()
+    {
+        _notifier.UpdateFavorites -= OnUpdateFavorites;
+    }
 }

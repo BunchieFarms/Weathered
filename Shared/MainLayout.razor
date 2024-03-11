@@ -10,7 +10,7 @@
         <MudText Typo="Typo.h5">Weathered</MudText>
     </MudAppBar>
     
-    <MudDrawer @bind-Open="@_drawerOpen">
+    <MudDrawer ClipMode="@DrawerClipMode.Always" @bind-Open="@_drawerOpen">
         <SideBar />
     </MudDrawer>
     <MudMainContent>

@@ -10,14 +10,14 @@ using GoogleApi.Entities.Maps.TimeZone.Response;
 
 namespace Weathered.Data
 {
-    public class WeatheredService
+    public class WeatheredBusiness
     {
         private readonly IConfiguration _config;
         private readonly WeatheredContext _context;
         private readonly GoogleMaps.Geocode.AddressGeocodeApi _geocodeApi;
         private readonly GoogleMaps.TimeZoneApi _timezoneApi;
         private readonly HttpClient _client;
-        public WeatheredService(WeatheredContext context, GoogleMaps.Geocode.AddressGeocodeApi geocodeApi, IConfiguration config, HttpClient client, GoogleMaps.TimeZoneApi timezoneApi)
+        public WeatheredBusiness(WeatheredContext context, GoogleMaps.Geocode.AddressGeocodeApi geocodeApi, IConfiguration config, HttpClient client, GoogleMaps.TimeZoneApi timezoneApi)
         {
             _context = context;
             _geocodeApi = geocodeApi;
@@ -25,6 +25,15 @@ namespace Weathered.Data
             _client = client;
             _timezoneApi = timezoneApi;
         }
+
+        public async Task<WeatheredResponse> GetWeatheredResponseByStationId(int stationId)
+        {
+            StationLoc station = _context.StationLocs.Include(x => x.PastWeekData).FirstOrDefault(x => x.StationLocId == stationId);
+            var locationTime = await GetLocationTime(new Coordinate(station.Lat, station.Lon));
+            DateTime locationDateTime = DateTimeExtension.epoch.AddSeconds((double)(DateTime.UtcNow.DateTimeToUnixTimestamp() + locationTime.RawOffSet + locationTime.OffSet));
+            return new WeatheredResponse(station, locationDateTime);
+        }
+
         public async Task<WeatheredResponse> GetWeatheredResponse(string location)
         {
             WeatheredResponse pastWeatherResponse = new WeatheredResponse();
@@ -42,7 +51,6 @@ namespace Weathered.Data
             StationLoc nearestStation = GetNearestStation(resResults.Geometry.Location);
             pastWeatherResponse = new WeatheredResponse(nearestStation, locationDateTime);
 
-
             return pastWeatherResponse;
         }
 
@@ -54,7 +62,7 @@ namespace Weathered.Data
             return apiResponse.Result.daily.data;
         }
 
-        public async Task<TimeZoneResponse> GetLocationTime(Coordinate coords)
+        private async Task<TimeZoneResponse> GetLocationTime(Coordinate coords)
         {
             TimeZoneRequest tzReq = new TimeZoneRequest { Key = _config["GeocodingKey"], Location = coords, TimeStamp = DateTime.UtcNow };
             return await _timezoneApi.QueryAsync(tzReq);

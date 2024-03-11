@@ -20,7 +20,7 @@
 
     private string GetDayRain(DaySummary day)
     {
-        return day.Prcp == 0 ? "no rain" : day.Prcp < .25f ? "<.25 in rain" : $"{(day.Prcp).ToString("#.##")} in rain";
+        return day.Prcp == 0 ? "no precip" : day.Prcp < .25f ? "<.25 in precip" : $"{(day.Prcp).ToString("#.##")} in precip";
     }
 
     private string GetDayTemp(DaySummary day)

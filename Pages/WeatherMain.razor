@@ -3,12 +3,14 @@
 @using Weathered.Data;
 @using Weathered.Models;
 @using System.Text.Json;
-@inject WeatheredService _ws;
-@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@using Weathered.Services
+@inject WeatheredBusiness _wb;
+@inject NotifierService _notifier;
+@inject Blazored.LocalStorage.ILocalStorageService localStorage;
 
 <div Class="d-flex gap-1 pa-4" style="max-width: 500px;margin:0px auto">
     <MudTextField @bind-Value="LocationInput" Label="Enter a Location" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled=loading OnClick="SubmitLocation">Submit</MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled=loading OnClick="() => SubmitLocation()">Submit</MudButton>
 </div>
 
 @if (loading)
@@ -20,6 +22,7 @@
 
 @if (response != null)
 {
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="MakeFavorite">Make Favorite</MudButton>
     <h6 Style="text-align:center">Nearest Weather Station:</h6>
     <h5 Style="text-align:center">@response.StationName</h5>
     <div Class="d-flex flex-wrap justify-space-around ">
@@ -44,21 +47,25 @@
     private string lastInput { get; set; } = "";
     private WeatheredResponse? response;
 
-    private async Task SubmitLocation()
+    private async Task SubmitLocation(int stationLocId = -1)
     {
         string trimmedInput = LocationInput.Trim();
-        if (trimmedInput != lastInput)
+        if (trimmedInput != lastInput || stationLocId > -1)
         {
             loading = true;
             response = null;
             lastInput = trimmedInput;
-            response = await _ws.GetWeatheredResponse(trimmedInput);
+            if (stationLocId > -1)
+                response = await _wb.GetWeatheredResponseByStationId(stationLocId);
+            else
+                response = await _wb.GetWeatheredResponse(trimmedInput);
+
             if (response.StationLocId > 0)
             {
                 var needHistoricalForecast = response.DaySummaries.Where(x => x.isForecast).ToList();
                 if (needHistoricalForecast.Count() > 0)
                 {
-                    var histForecast = _ws.GetHistoricalForecast(response.Lat, response.Lon, needHistoricalForecast[0].Date);
+                    var histForecast = _wb.GetHistoricalForecast(response.Lat, response.Lon, needHistoricalForecast[0].Date);
                     for (var i = 0; i < needHistoricalForecast.Count; i++)
                     {
                         response.DaySummaries.First(x => x.Date == needHistoricalForecast[i].Date).Temp = histForecast[i].temperatureMax;
@@ -68,5 +75,42 @@
             }
             loading = false;
         }
+    }
+
+    private async Task MakeFavorite()
+    {
+        var history = await localStorage.GetItemAsync<List<LocalFavorites>>("localFavorites");
+        history.Add(new LocalFavorites(response.StationName, response.StationLocId));
+        await localStorage.SetItemAsync<List<LocalFavorites>>("localFavorites", history);
+        _notifier.AllLocalFavorites = history;
+    }
+
+    public async Task OnUpdateFavorites()
+    {
+        await InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+
+    public async Task SelectFavorite()
+    {
+        await InvokeAsync(() =>
+        {
+            SubmitLocation(_notifier.SelectedFavoriteStation.stationLocId);
+        });
+    }
+
+    protected override void OnInitialized()
+    {
+        _notifier.UpdateFavorites += OnUpdateFavorites;
+        _notifier.SelectFavorite += SelectFavorite;
+    }
+
+
+    public void Dispose()
+    {
+        _notifier.UpdateFavorites -= OnUpdateFavorites;
+        _notifier.SelectFavorite -= SelectFavorite;
     }
 }

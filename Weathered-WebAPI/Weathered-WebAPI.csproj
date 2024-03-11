@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <RootNamespace>Weathered_WebAPI</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GoogleApi" Version="5.3.1" />
+    <PackageReference Include="MongoDB.Driver" Version="2.24.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="PirateWeather-DotNetLib">
+      <HintPath>..\..\CommonLib\PirateWeather-DotNetLib.dll</HintPath>
+    </Reference>
+    <Reference Include="Weathered-Lib">
+      <HintPath>..\..\CommonLib\Weathered-Lib.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

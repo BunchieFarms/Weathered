@@ -4,13 +4,15 @@ using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using Weathered.Data;
 using Weathered.Models;
+using Weathered.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddScoped<WeatheredService>();
+builder.Services.AddScoped<WeatheredBusiness>();
+builder.Services.AddScoped<NotifierService>();
 
 builder.Services.AddMudServices();
 
