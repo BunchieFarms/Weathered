@@ -1,16 +1,15 @@
-﻿@inherits LayoutComponentBase
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+﻿@using MudBlazor
+@using Weathered_Web.Pages
+@inherits LayoutComponentBase
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+<MudThemeProvider />
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+<MudLayout Class="d-flex pa-4">
+    <MudAppBar Dense="true">
+        <MudText Typo="Typo.h5">Weathered</MudText>
+    </MudAppBar>
+
+    <MudMainContent>
+        <WeatherMain />
+    </MudMainContent>
+</MudLayout>
