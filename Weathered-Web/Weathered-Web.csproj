@@ -13,6 +13,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="PirateWeather-DotNetLib">
+      <HintPath>..\..\CommonLib\PirateWeather-DotNetLib.dll</HintPath>
+    </Reference>
     <Reference Include="Weathered-Lib">
       <HintPath>..\..\CommonLib\Weathered-Lib.dll</HintPath>
     </Reference>

@@ -1,17 +1,25 @@
 ﻿@page "/"
-@using Weathered.Components;
-@using Weathered.Data;
-@using Weathered.Models;
 @using System.Text.Json;
-@using Weathered.Services
-@using Weathered.Weathered_Web.Components
-@inject WeatheredBusiness _wb;
-@inject NotifierService _notifier;
-@inject Blazored.LocalStorage.ILocalStorageService localStorage;
+@using PirateWeather_DotNetLib
+@using Weathered_Lib.Models
+@using Weathered_Web.Components;
+@inject HttpClient _http;
 
 <div Class="d-flex gap-1 pa-4" style="max-width: 500px;margin:0px auto">
-    <MudTextField @bind-Value="LocationInput" Label="Enter a Location" Variant="Variant.Outlined" Margin="Margin.Dense"></MudTextField>
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled=loading OnClick="() => SubmitLocation()">Submit</MudButton>
+    <MudTextField
+        @bind-Value="LocationInput"
+        @onkeyup="@SearchIfEnter"
+        Label="Enter a Location"
+        Variant="Variant.Outlined"
+        Margin="Margin.Dense">
+    </MudTextField>
+    <MudButton
+        Variant="Variant.Filled"
+        Color="Color.Primary"
+        Disabled=loading
+        OnClick="() => SubmitLocation()">
+            Submit
+    </MudButton>
 </div>
 
 @if (loading)
@@ -23,11 +31,10 @@
 
 @if (response != null)
 {
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="MakeFavorite">Make Favorite</MudButton>
     <h6 Style="text-align:center">Nearest Weather Station:</h6>
     <h5 Style="text-align:center">@response.StationName</h5>
     <div Class="d-flex flex-wrap justify-space-around ">
-        @foreach (DaySummary day in response.DaySummaries.AsEnumerable().Reverse().Take(6))
+        @foreach (WeatherData day in response.Data.OrderByDescending(x => x.RecordDate).Take(6))
         {
             <WeatherCard day="day"></WeatherCard>
         }
@@ -38,7 +45,7 @@
     <MudText Typo="Typo.h6" style="text-align:center">Disclaimers!</MudText>
     <MudText Typo="Typo.body2" style="text-align:center">Items highlighted yellow are historical forecasts, and do not necessarily reflect reality.</MudText>
     <MudText Typo="Typo.body2" style="text-align:center">Some stations update a little slower than others. I check for updates every hour.</MudText>
-    <MudText Typo="Typo.body2" style="text-align:center">Purple Data credit to the NCEI GSOD Dataset.</MudText>
+    <MudText Typo="Typo.body2" style="text-align:center">Purple Data credit to the NCEI GSOD Dataset. Yellow Data credit to Pirate Weather.</MudText>
 </div>
 
 @code {
@@ -48,34 +55,60 @@
     private string lastInput { get; set; } = "";
     private WeatheredResponse? response;
 
-    private async Task SubmitLocation(int stationLocId = -1)
+    private async Task SearchIfEnter(KeyboardEventArgs? e)
     {
-        // string trimmedInput = LocationInput.Trim();
-        // if (trimmedInput != lastInput || stationLocId > -1)
-        // {
-        //     loading = true;
-        //     response = null;
-        //     lastInput = trimmedInput;
-        //     if (stationLocId > -1)
-        //         response = await _wb.GetWeatheredResponseByStationId(stationLocId);
-        //     else
-        //         response = await _wb.GetWeatheredResponse(trimmedInput);
+        if (e.Code == "Enter" || e.Code == "NumpadEnter")
+            await SubmitLocation();
+    }
 
-        //     if (response.StationLocId > 0)
-        //     {
-        //         var needHistoricalForecast = response.DaySummaries.Where(x => x.isForecast).ToList();
-        //         if (needHistoricalForecast.Count() > 0)
-        //         {
-        //             var histForecast = _wb.GetHistoricalForecast(response.Lat, response.Lon, needHistoricalForecast[0].Date);
-        //             for (var i = 0; i < needHistoricalForecast.Count; i++)
-        //             {
-        //                 response.DaySummaries.First(x => x.Date == needHistoricalForecast[i].Date).Temp = histForecast[i].temperatureMax;
-        //                 response.DaySummaries.First(x => x.Date == needHistoricalForecast[i].Date).Prcp = histForecast[i].precipAccumulation;
-        //             }
-        //         }
-        //     }
-        //     loading = false;
-        // }
+    private async Task SubmitLocation(string stationNumber = "")
+    {
+        string trimmedInput = LocationInput.Trim();
+        if (trimmedInput != lastInput || stationNumber != "")
+        {
+            loading = true;
+            response = null;
+            lastInput = trimmedInput;
+            var req = new WeatheredRequest();
+            if (stationNumber != "")
+                req.StationNumber = stationNumber;
+            else
+                req.Location = trimmedInput;
+
+            response = await GetWeatheredResponse(req);
+            loading = false;
+            StateHasChanged();
+
+            var needHistoricalForecast = response.Data.Where(x => x.Is_Forecast).ToList();
+            if (response.StationNumber != "" && needHistoricalForecast.Count > 0)
+            {
+                var histForecast = await GetHistoricalForecast(response.Latitude, response.Longitude, needHistoricalForecast[0].RecordDate);
+                for (var i = 0; i < needHistoricalForecast.Count; i++)
+                {
+                    var match = response.Data.FindIndex(x => x.RecordDate == needHistoricalForecast[i].RecordDate);
+                    response.Data[match] = histForecast.First(x => x.RecordDate == needHistoricalForecast[i].RecordDate);
+                }
+            }
+        }
+    }
+
+    private async Task<WeatheredResponse> GetWeatheredResponse(WeatheredRequest req)
+    {
+        var res = await _http.PostAsJsonAsync("api/getWeathered", req);
+        return await res.Content.ReadFromJsonAsync<WeatheredResponse>() ?? new WeatheredResponse();
+    }
+
+    private async Task<List<WeatherData>> GetHistoricalForecast(double latitude, double longitude, DateOnly date)
+    {
+        var req = new PirateWeatheredRequest(latitude, longitude, date);
+        var res = await _http.PostAsJsonAsync("api/getHistoricalForecast", req);
+        var obj = await res.Content.ReadFromJsonAsync<DailyData[]>() ?? new DailyData[0];
+        List<WeatherData> resp = new List<WeatherData>();
+        for (var i = 0; i < obj.Length; i++)
+        {
+            resp.Add(new WeatherData(obj[i], date.AddDays(i)));
+        }
+        return resp;
     }
 
     protected override void OnInitialized()

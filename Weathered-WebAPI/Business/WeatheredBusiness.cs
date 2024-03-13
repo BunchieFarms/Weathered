@@ -5,7 +5,6 @@ using GoogleApi.Entities.Maps.TimeZone.Request;
 using GoogleApi.Entities.Maps.TimeZone.Response;
 using GoogleApi;
 using GoogleApi.Entities.Common;
-using Weathered_WebAPI.Models;
 using Weathered_Lib.Models;
 using Weathered_Lib.Mongo;
 using MongoDB.Driver;
@@ -36,7 +35,7 @@ namespace Weathered_WebAPI.Business
                 return await GetWeatheredResponseByStationNumber(req.StationNumber);
         }
 
-        public async Task<WeatheredResponse> GetWeatheredResponseByStationNumber(string stationNumber)
+        private async Task<WeatheredResponse> GetWeatheredResponseByStationNumber(string stationNumber)
         {
             PastWeekStationData station = MongoBase.PastStationDataColl.AsQueryable().First(x => x.StationNumber == stationNumber);
             var locationTime = await GetLocationTime(new Coordinate(station.Latitude, station.Longitude));
@@ -44,7 +43,7 @@ namespace Weathered_WebAPI.Business
             return new WeatheredResponse(station, locationDateTime);
         }
 
-        public async Task<WeatheredResponse> GetWeatheredResponseByLocation(string location)
+        private async Task<WeatheredResponse> GetWeatheredResponseByLocation(string location)
         {
             WeatheredResponse pastWeatherResponse = new WeatheredResponse();
             AddressGeocodeRequest geo = new AddressGeocodeRequest();
@@ -64,18 +63,18 @@ namespace Weathered_WebAPI.Business
             return pastWeatherResponse;
         }
 
-        public async Task<DailyData[]> GetHistoricalForecast(float lat, float lon, DateOnly date)
+        public async Task<List<DailyData>> GetHistoricalForecast(PirateWeatheredRequest pReq)
         {
-            var daysAgo = (int)(DateTime.Now.Date - date.ToDateTime(TimeOnly.MinValue).Date).TotalDays;
+            var daysAgo = (int)(DateTime.Now.Date - pReq.Date.ToDateTime(TimeOnly.MinValue).Date).TotalDays;
             ForecastRequest req = new ForecastRequest
             {
                 ApiKey = _config["PirateApiKey"],
-                Location = new Location(lat, lon),
+                Location = new Location(pReq.Latitude, pReq.Longitude),
                 Time = new Time(daysAgo),
                 Include = [DataGroup.Daily]
             };
             var res = await PirateForecast.GetAsync(req);
-            return res.Daily.Data;
+            return res.Daily.Data.ToList();
         }
 
         private async Task<TimeZoneResponse> GetLocationTime(Coordinate coords)

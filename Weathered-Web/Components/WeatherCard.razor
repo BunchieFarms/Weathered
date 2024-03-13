@@ -1,30 +1,46 @@
-﻿@using Weathered_Lib.Models;
+﻿@using PirateWeather_DotNetLib
+@using Weathered_Lib.Models;
 
 <MudCard Style="@GetCardBGColor(day)" Class="d-flex ma-4 flex-grow-1 justify-content-center">
     <MudCardContent Style="text-align:center">
-        <MudText>@day.Date</MudText>
-        <MudText>@day.Date.DayOfWeek</MudText>
-        <MudText Typo="Typo.body2">@GetDayRain(day)</MudText>
-        <MudText Typo="Typo.body2">@GetDayTemp(day)</MudText>
+        <MudText Typo="Typo.subtitle1">@day.RecordDate</MudText>
+        <MudText Typo="Typo.subtitle2">@day.RecordDate.DayOfWeek</MudText>
+            <MudDivider DividerType="DividerType.Inset" />
+        @if (day.Is_Forecast && day.Precip_Type == "")
+        {
+            <div Class="d-flex justify-content-center">
+                <MudProgressCircular Color="Color.Primary" Style="height:100px;width:100px" Indeterminate="true" />
+            </div>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2">@GetDayRain(day)</MudText>
+            <MudText Typo="Typo.body2">@day.Temp_Max°F high</MudText>
+            <MudText Typo="Typo.body2">@day.Temp_Min°F low</MudText>
+            <MudText Typo="Typo.body2">@GetWindSpeed(day.WindSpeed_Avg, day.Is_Forecast) avg wind</MudText>
+            <MudText Typo="Typo.body2">@GetWindSpeed(day.WindSpeed_Gust, day.Is_Forecast) gust</MudText>
+        }
+        
     </MudCardContent>
 </MudCard>
 
-@code {
+    @code {
     [Parameter]
-    public DaySummary day { get; set; }
+    public WeatherData day { get; set; } = new WeatherData();
 
-    private string GetCardBGColor(DaySummary day)
+    private string GetCardBGColor(WeatherData day)
     {
-        return day.isForecast ? "background-color:rgba(255,152,0,.25)" : "background-color:rgba(89,74,226,.25)";
+        return day.Is_Forecast ? "background-color:rgba(255,152,0,.25)" : "background-color:rgba(89,74,226,.25)";
     }
 
-    private string GetDayRain(DaySummary day)
+    private string GetDayRain(WeatherData day)
     {
-        return day.Prcp == 0 ? "no precip" : day.Prcp < .25f ? "<.25 in precip" : $"{(day.Prcp).ToString("#.##")} in precip";
+        return day.Precip_Total == 0 ? $"no {day.Precip_Type}" : day.Precip_Total < .25f ? $"<.25 in {day.Precip_Type}" : $"{(day.Precip_Total).ToString("#.##")} in {day.Precip_Type}";
     }
 
-    private string GetDayTemp(DaySummary day)
+    private string GetWindSpeed(double windSpeed, bool isForecast) //if forecast, in mph. Else, in knots.
     {
-        return day.isForecast ? $"{Math.Round(day.Temp)} max temp" : $"{Math.Round(day.Temp)} avg temp";
+        double speed = isForecast ? windSpeed : windSpeed * 1.151;
+        return $"{(int)speed} mph";
     }
 }
