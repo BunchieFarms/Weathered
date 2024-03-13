@@ -33,12 +33,12 @@
 {
     <h6 Style="text-align:center">Nearest Weather Station:</h6>
     <h5 Style="text-align:center">@response.StationName</h5>
-    <div Class="d-flex flex-wrap justify-space-around ">
+    <MudGrid>
         @foreach (WeatherData day in response.Data.OrderByDescending(x => x.RecordDate).Take(6))
         {
             <WeatherCard day="day"></WeatherCard>
         }
-    </div>
+    </MudGrid>
 }
 
 <div Class="mt-4">

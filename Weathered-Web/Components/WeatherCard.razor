@@ -1,32 +1,43 @@
 ﻿@using PirateWeather_DotNetLib
 @using Weathered_Lib.Models;
 
-<MudCard Style="@GetCardBGColor(day)" Class="d-flex ma-4 flex-grow-1 justify-content-center">
-    <MudCardContent Style="text-align:center">
-        <MudText Typo="Typo.subtitle1">@day.RecordDate</MudText>
-        <MudText Typo="Typo.subtitle2">@day.RecordDate.DayOfWeek</MudText>
-            <MudDivider DividerType="DividerType.Inset" />
-        @if (day.Is_Forecast && day.Precip_Type == "")
-        {
-            <div Class="d-flex justify-content-center">
-                <MudProgressCircular Color="Color.Primary" Style="height:100px;width:100px" Indeterminate="true" />
-            </div>
-        }
-        else
-        {
-            <MudText Typo="Typo.body2">@GetDayRain(day)</MudText>
-            <MudText Typo="Typo.body2">@day.Temp_Max°F high</MudText>
-            <MudText Typo="Typo.body2">@day.Temp_Min°F low</MudText>
-            <MudText Typo="Typo.body2">@GetWindSpeed(day.WindSpeed_Avg, day.Is_Forecast) avg wind</MudText>
-            <MudText Typo="Typo.body2">@GetWindSpeed(day.WindSpeed_Gust, day.Is_Forecast) gust</MudText>
-        }
-        
-    </MudCardContent>
-</MudCard>
+<MudItem md="2" xs="6">
+    <MudCard Style="@GetCardBGColor(day)" Class="justify-content-center">
+        <MudCardContent Style="text-align:center">
+            <MudText Typo="Typo.subtitle1">@day.RecordDate</MudText>
+            <MudText Typo="Typo.subtitle2">@GetDay(day.RecordDate)</MudText>
+                <MudDivider DividerType="DividerType.Inset" />
+            @if (day.Is_Forecast && day.Precip_Type == "")
+            {
+                <div Class="d-flex justify-content-center">
+                    <MudProgressCircular Color="Color.Primary" Style="height:100px;width:100px" Indeterminate="true" />
+                </div>
+            }
+            else
+            {
+                <MudText Typo="Typo.body2">@GetDayRain(day)</MudText>
+                <MudText Typo="Typo.body2">@day.Temp_Max°F high</MudText>
+                <MudText Typo="Typo.body2">@day.Temp_Min°F low</MudText>
+                <MudText Typo="Typo.body2">@GetWindSpeed(day.WindSpeed_Avg, day.Is_Forecast) avg wind</MudText>
+                <MudText Typo="Typo.body2">@GetWindSpeed(day.WindSpeed_Gust, day.Is_Forecast) gust</MudText>
+            }
+        </MudCardContent>
+    </MudCard>
+</MudItem>
 
-    @code {
+@code {
     [Parameter]
     public WeatherData day { get; set; } = new WeatherData();
+
+    private string GetDay(DateOnly date)
+    {
+        string retVal = date.DayOfWeek.ToString();
+        if (DateOnly.FromDateTime(DateTime.Now) == date)
+            retVal = "Today";
+        if (DateOnly.FromDateTime(DateTime.Now.AddDays(-1)) == date)
+            retVal = "Yesterday";
+        return retVal;
+    }
 
     private string GetCardBGColor(WeatherData day)
     {
