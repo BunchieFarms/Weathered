@@ -5,22 +5,23 @@
 @using Weathered_Web.Components;
 @inject HttpClient _http;
 
-<div Class="d-flex gap-1 pa-4" style="max-width: 500px;margin:0px auto">
-    <MudTextField
-        @bind-Value="LocationInput"
-        @onkeyup="@SearchIfEnter"
-        Label="Enter a Location"
-        Variant="Variant.Outlined"
-        Margin="Margin.Dense">
-    </MudTextField>
-    <MudButton
-        Variant="Variant.Filled"
-        Color="Color.Primary"
-        Disabled=loading
-        OnClick="() => SubmitLocation()">
-            Submit
-    </MudButton>
-</div>
+<form @onsubmit="() => SubmitLocation()">
+    <div Class="d-flex gap-1 pa-4" style="max-width: 500px;margin:0px auto">
+        <MudTextField
+            @bind-Value="LocationInput"
+            Label="Enter a Location"
+            Variant="Variant.Outlined"
+            Margin="Margin.Dense">
+        </MudTextField>
+        <MudButton
+            Variant="Variant.Filled"
+            Color="Color.Primary"
+            Disabled=loading
+            OnClick="() => SubmitLocation()">
+                Submit
+        </MudButton>
+    </div>
+</form>
 
 @if (loading)
 {
@@ -99,12 +100,6 @@
     private string lastInput { get; set; } = "";
     private WeatheredResponse? response;
     private List<WeatherData>? forecast;
-
-    private async Task SearchIfEnter(KeyboardEventArgs? e)
-    {
-        if (e.Code == "Enter" || e.Code == "NumpadEnter")
-            await SubmitLocation();
-    }
 
     private async Task GetForecast()
     {
