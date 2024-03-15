@@ -1,15 +1,39 @@
 ﻿@using MudBlazor
 @using Weathered_Web.Pages
 @inherits LayoutComponentBase
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
-<MudThemeProvider />
+<MudThemeProvider IsDarkMode="@darkModeEnabled" />
 
 <MudLayout Class="d-flex pa-4">
     <MudAppBar Dense="true">
         <MudText Typo="Typo.h5">Weathered</MudText>
+        <MudSpacer />
+        <MudIconButton Icon="@(darkModeEnabled ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)" OnClick="ToggleTheme" Color="Color.Inherit" />
     </MudAppBar>
 
     <MudMainContent>
         <WeatherMain />
     </MudMainContent>
 </MudLayout>
+
+@code {
+    private bool darkModeEnabled = false;
+
+    private async Task ToggleTheme()
+    {
+        darkModeEnabled = !darkModeEnabled;
+        await localStorage.SetItemAsync("darkModeEnabled", darkModeEnabled.ToString());
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var darkModeEnabledString = await localStorage.GetItemAsync<string>("darkModeEnabled");
+        if (darkModeEnabledString == null)
+        {
+            await localStorage.SetItemAsync("darkModeEnabled", "false");
+            darkModeEnabledString = "false";
+        }
+        darkModeEnabled = bool.Parse(darkModeEnabledString);
+    }
+}

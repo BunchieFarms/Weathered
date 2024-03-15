@@ -1,3 +1,4 @@
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using MudBlazor.Services;
@@ -14,5 +15,6 @@ string baseAddress = "http://weathered.bryceohmer.com";
 
 builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(baseAddress) });
 builder.Services.AddMudServices();
+builder.Services.AddBlazoredLocalStorage();
 
 await builder.Build().RunAsync();
