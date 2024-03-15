@@ -44,6 +44,11 @@ app.MapPost("api/getHistoricalForecast", async (PirateWeatheredRequest req, Weat
     return await _wb.GetHistoricalForecast(req);
 });
 
+app.MapPost("api/getPirateWeather", async (PirateWeatheredRequest req, WeatheredBusiness _wb) =>
+{
+    return await _wb.GetPirateWeather(req);
+});
+
 app.UseCors(AllowLocalCors);
 
 app.Run();

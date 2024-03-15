@@ -6,7 +6,6 @@
         <MudCardContent Style="text-align:center">
             <MudText Typo="Typo.subtitle1">@day.RecordDate</MudText>
             <MudText Typo="Typo.subtitle2">@GetDay(day.RecordDate)</MudText>
-                <MudDivider DividerType="DividerType.Inset" />
             @if (day.Is_Forecast && day.Precip_Type == "")
             {
                 <div Class="d-flex justify-content-center">
@@ -36,12 +35,14 @@
             retVal = "Today";
         if (DateOnly.FromDateTime(DateTime.Now.AddDays(-1)) == date)
             retVal = "Yesterday";
+        if (DateOnly.FromDateTime(DateTime.Now.AddDays(1)) == date)
+            retVal = "Tomorrow";
         return retVal;
     }
 
     private string GetCardBGColor(WeatherData day)
     {
-        return day.Is_Forecast ? "background-color:rgba(255,152,0,.25)" : "background-color:rgba(89,74,226,.25)";
+        return day.Is_Forecast ? "border:5px solid rgba(255,152,0,.25)" : "border:5px solid rgba(89,74,226,.25)";
     }
 
     private string GetDayRain(WeatherData day)

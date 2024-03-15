@@ -33,12 +33,55 @@
 {
     <h6 Style="text-align:center">Nearest Weather Station:</h6>
     <h5 Style="text-align:center">@response.StationName</h5>
-    <MudGrid>
-        @foreach (WeatherData day in response.Data.OrderByDescending(x => x.RecordDate).Take(6))
-        {
-            <WeatherCard day="day"></WeatherCard>
-        }
-    </MudGrid>
+
+    <div class="mx-auto">
+        <MudExpansionPanels MultiExpansion="true">
+
+            <MudExpansionPanel IsExpandedChanged="GetForecast">
+                <TitleContent>
+                    <div class="d-flex">
+                        <MudIcon Icon="@Icons.Material.Filled.CloudUpload" class="mr-3" />
+                        <MudText>Forecast</MudText>
+                        @if (forecastLoading)
+                        {
+                            <div Class="d-flex justify-content-center ml-3">
+                                <MudProgressCircular Color="Color.Primary" Style="height:25px;width:25px" Indeterminate="true" />
+                            </div>
+                        }
+                    </div>
+                </TitleContent>
+                <ChildContent>
+                    <MudGrid>
+                        @if (forecast != null)
+                        {
+                            @foreach (WeatherData day in forecast.OrderBy(x => x.RecordDate).Take(6))
+                            {
+                                <WeatherCard day="day"></WeatherCard>
+                            }
+                        }
+                    </MudGrid>
+                </ChildContent>
+            </MudExpansionPanel>
+
+            <MudExpansionPanel IsInitiallyExpanded="true">
+                <TitleContent>
+                    <div class="d-flex">
+                        <MudIcon Icon="@Icons.Material.Filled.History" class="mr-3"></MudIcon>
+                        <MudText>Weather History</MudText>
+                    </div>
+                </TitleContent>
+                <ChildContent>
+                    <MudGrid>
+                        @foreach (WeatherData day in response.Data.OrderByDescending(x => x.RecordDate).Take(6))
+                        {
+                            <WeatherCard day="day"></WeatherCard>
+                        }
+                    </MudGrid>
+                </ChildContent>
+            </MudExpansionPanel>
+
+        </MudExpansionPanels>
+    </div>
 }
 
 <div Class="mt-4">
@@ -51,14 +94,33 @@
 @code {
     public string LocationInput = "";
     public bool loading = false;
+    public bool forecastLoading = false;
 
     private string lastInput { get; set; } = "";
     private WeatheredResponse? response;
+    private List<WeatherData>? forecast;
 
     private async Task SearchIfEnter(KeyboardEventArgs? e)
     {
         if (e.Code == "Enter" || e.Code == "NumpadEnter")
             await SubmitLocation();
+    }
+
+    private async Task GetForecast()
+    {
+        if (forecast == null && !forecastLoading)
+        {
+            forecastLoading = true;
+            var req = new PirateWeatheredRequest(response.Latitude, response.Longitude, DateOnly.MinValue);
+            var res = await _http.PostAsJsonAsync("api/getPirateWeather", req);
+            var obj = await res.Content.ReadFromJsonAsync<DailyData[]>() ?? new DailyData[0];
+            forecast = new List<WeatherData>();
+            for (var i = 0; i < obj.Length; i++)
+            {
+                forecast.Add(new WeatherData(obj[i], DateOnly.FromDateTime(DateTimeOffset.FromUnixTimeSeconds(obj[i].Time).UtcDateTime)));
+            }
+            forecastLoading = false;
+        }
     }
 
     private async Task SubmitLocation(string stationNumber = "")
@@ -68,6 +130,7 @@
         {
             loading = true;
             response = null;
+            forecast = null;
             lastInput = trimmedInput;
             var req = new WeatheredRequest();
             if (stationNumber != "")

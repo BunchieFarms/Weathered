@@ -63,6 +63,13 @@ namespace Weathered_WebAPI.Business
             return pastWeatherResponse;
         }
 
+        public async Task<List<DailyData>> GetPirateWeather(PirateWeatheredRequest pReq)
+        {
+            ForecastRequest req = new ForecastRequest(_config["PirateApiKey"], new Location(pReq.Latitude, pReq.Longitude));
+            var res = await PirateForecast.GetAsync(req);
+            return res.Daily.Data.ToList();
+        }
+
         public async Task<List<DailyData>> GetHistoricalForecast(PirateWeatheredRequest pReq)
         {
             var daysAgo = (int)(DateTime.Now.Date - pReq.Date.ToDateTime(TimeOnly.MinValue).Date).TotalDays;
