@@ -46,7 +46,10 @@
 
     private string GetDayRain(WeatherData day)
     {
-        return day.Precip_Total == 0 ? $"no {day.Precip_Type}" : day.Precip_Total < .25f ? $"<.25 in {day.Precip_Type}" : $"{(day.Precip_Total).ToString("#.##")} in {day.Precip_Type}";
+        return day.Precip_Total == 0 ? $"no {day.Precip_Type}" :
+            day.Precip_Total < .1 ? $"barely any {day.Precip_Type}" :
+            day.Precip_Total < .25f ? $"<.25 in {day.Precip_Type}" :
+            $"{(day.Precip_Total).ToString("#.##")} in {day.Precip_Type}";
     }
 
     private string GetWindSpeed(double windSpeed, bool isForecast) //if forecast, in mph. Else, in knots.

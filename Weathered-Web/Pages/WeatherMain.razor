@@ -23,6 +23,12 @@
     </div>
 </form>
 
+<style>
+    .mud-expand-panel .mud-expand-panel-content {
+        padding: 0 8px 8px;
+    }
+</style>
+
 @if (loading)
 {
     <div Class="d-flex justify-content-center">
@@ -38,7 +44,7 @@
     <div class="mx-auto">
         <MudExpansionPanels MultiExpansion="true">
 
-            <MudExpansionPanel IsExpandedChanged="GetForecast">
+            <MudExpansionPanel IsExpandedChanged="GetForecast" Class="custom-expansion-panel">
                 <TitleContent>
                     <div class="d-flex">
                         <MudIcon Icon="@Icons.Material.Filled.CloudUpload" class="mr-3" />
@@ -52,7 +58,7 @@
                     </div>
                 </TitleContent>
                 <ChildContent>
-                    <MudGrid>
+                    <MudGrid Spacing="1">
                         @if (forecast != null)
                         {
                             @foreach (WeatherData day in forecast.OrderBy(x => x.RecordDate).Take(6))
@@ -64,7 +70,7 @@
                 </ChildContent>
             </MudExpansionPanel>
 
-            <MudExpansionPanel IsInitiallyExpanded="true">
+            <MudExpansionPanel IsInitiallyExpanded="true" Class="custom-expansion-panel">
                 <TitleContent>
                     <div class="d-flex">
                         <MudIcon Icon="@Icons.Material.Filled.History" class="mr-3"></MudIcon>
@@ -72,7 +78,7 @@
                     </div>
                 </TitleContent>
                 <ChildContent>
-                    <MudGrid>
+                    <MudGrid Spacing="1">
                         @foreach (WeatherData day in response.Data.OrderByDescending(x => x.RecordDate).Take(6))
                         {
                             <WeatherCard day="day"></WeatherCard>
@@ -99,7 +105,44 @@
 
     private string lastInput { get; set; } = "";
     private WeatheredResponse? response;
-    private List<WeatherData>? forecast;
+    private List<WeatherData>? responseData, forecast;
+
+    private async Task SubmitLocation(string stationNumber = "")
+    {
+        string trimmedInput = LocationInput.Trim();
+        if (trimmedInput != lastInput || stationNumber != "")
+        {
+            loading = true;
+            response = null;
+            responseData = forecast = null;
+            lastInput = trimmedInput;
+            var req = new WeatheredRequest();
+            if (stationNumber != "")
+                req.StationNumber = stationNumber;
+            else
+                req.Location = trimmedInput;
+
+            response = await GetWeatheredResponse(req);
+
+            responseData = response.Data.OrderByDescending(x => x.RecordDate).Take(7).ToList();
+
+            response.Data.RemoveAt(response.Data.OrderByDescending(x => x.RecordDate).First().Is_Forecast ? 7 : 0); //cheeky
+
+            loading = false;
+            StateHasChanged();
+
+            List<WeatherData> needHistoricalForecast = response.Data.Where(x => x.Is_Forecast).ToList();
+            if (response.StationNumber != "" && needHistoricalForecast.Count > 0)
+            {
+                var histForecast = await GetHistoricalForecast(response.Latitude, response.Longitude, needHistoricalForecast[0].RecordDate);
+                for (var i = 0; i < needHistoricalForecast.Count; i++)
+                {
+                    var match = response.Data.FindIndex(x => x.RecordDate == needHistoricalForecast[i].RecordDate);
+                    response.Data[match] = histForecast.First(x => x.RecordDate == needHistoricalForecast[i].RecordDate);
+                }
+            }
+        }
+    }
 
     private async Task GetForecast()
     {
@@ -110,43 +153,12 @@
             var res = await _http.PostAsJsonAsync("api/getPirateWeather", req);
             var obj = await res.Content.ReadFromJsonAsync<DailyData[]>() ?? new DailyData[0];
             forecast = new List<WeatherData>();
-            for (var i = 0; i < obj.Length; i++)
+            int start = responseData[0].Is_Forecast ? 0 : 1;
+            for (int i = start; i < obj.Length; i++)
             {
                 forecast.Add(new WeatherData(obj[i], DateOnly.FromDateTime(DateTimeOffset.FromUnixTimeSeconds(obj[i].Time).UtcDateTime)));
             }
             forecastLoading = false;
-        }
-    }
-
-    private async Task SubmitLocation(string stationNumber = "")
-    {
-        string trimmedInput = LocationInput.Trim();
-        if (trimmedInput != lastInput || stationNumber != "")
-        {
-            loading = true;
-            response = null;
-            forecast = null;
-            lastInput = trimmedInput;
-            var req = new WeatheredRequest();
-            if (stationNumber != "")
-                req.StationNumber = stationNumber;
-            else
-                req.Location = trimmedInput;
-
-            response = await GetWeatheredResponse(req);
-            loading = false;
-            StateHasChanged();
-
-            var needHistoricalForecast = response.Data.Where(x => x.Is_Forecast).ToList();
-            if (response.StationNumber != "" && needHistoricalForecast.Count > 0)
-            {
-                var histForecast = await GetHistoricalForecast(response.Latitude, response.Longitude, needHistoricalForecast[0].RecordDate);
-                for (var i = 0; i < needHistoricalForecast.Count; i++)
-                {
-                    var match = response.Data.FindIndex(x => x.RecordDate == needHistoricalForecast[i].RecordDate);
-                    response.Data[match] = histForecast.First(x => x.RecordDate == needHistoricalForecast[i].RecordDate);
-                }
-            }
         }
     }
 
