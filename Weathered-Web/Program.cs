@@ -8,7 +8,7 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-string baseAddress = "http://weathered.bryceohmer.com";
+string baseAddress = "https://weathered.bryceohmer.com";
 #if DEBUG
     baseAddress = "http://localhost:5085";
 #endif
