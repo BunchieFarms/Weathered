@@ -5,7 +5,11 @@
         <MudCardContent Style="text-align:center">
             <MudText Typo="Typo.subtitle1">@day.RecordDate</MudText>
             <MudText Typo="Typo.subtitle2">@GetDay(day.RecordDate)</MudText>
-            @if (day.Is_Forecast && day.Precip_Type == "")
+            @if (day.No_Data == true)
+            {
+                <MudText Typo="Typo.body2">No data for today.</MudText>
+            }
+            else if (day.Is_Forecast && day.Precip_Type == "")
             {
                 <div Class="d-flex justify-content-center">
                     <MudProgressCircular Color="Color.Primary" Style="height:100px;width:100px" Indeterminate="true" />
@@ -41,7 +45,8 @@
 
     private string GetCardBGColor(WeatherData day)
     {
-        return day.Is_Forecast ? "border:5px solid rgba(255,152,0,.25)" : "border:5px solid rgba(89,74,226,.25)";
+        string color = day.Is_Forecast ? "border:5px solid rgba(255,152,0,.25)" : "border:5px solid rgba(89,74,226,.25)";
+        return "height:100%;" + color;
     }
 
     private string GetDayRain(WeatherData day)

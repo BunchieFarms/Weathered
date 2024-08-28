@@ -72,7 +72,7 @@ namespace Weathered_WebAPI.Business
 
         public async Task<List<DailyData>> GetHistoricalForecast(PirateWeatheredRequest pReq)
         {
-            var daysAgo = (int)(DateTime.Now.Date - pReq.Date.ToDateTime(TimeOnly.MinValue).Date).TotalDays;
+            var daysAgo = (DateTime.Now.Date - pReq.Date.ToDateTime(TimeOnly.MinValue).Date).TotalDays;
             ForecastRequest req = new ForecastRequest
             {
                 ApiKey = _config["PirateApiKey"],
@@ -80,7 +80,13 @@ namespace Weathered_WebAPI.Business
                 Time = new Time(daysAgo),
                 Include = [DataGroup.Daily]
             };
-            var res = await PirateForecast.GetAsync(req);
+            var res = new PirateWeatherResponse();
+            while(res.Daily == null || daysAgo < 0)
+            {
+                req.Time = new Time(daysAgo);
+                res = await PirateForecast.GetAsync(req);
+                daysAgo -= 0.5;
+            }
             return res.Daily.Data.ToList();
         }
 

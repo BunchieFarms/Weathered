@@ -137,8 +137,15 @@
                 var histForecast = await GetHistoricalForecast(response.Latitude, response.Longitude, needHistoricalForecast[0].RecordDate);
                 for (var i = 0; i < needHistoricalForecast.Count; i++)
                 {
-                    var match = response.Data.FindIndex(x => x.RecordDate == needHistoricalForecast[i].RecordDate);
-                    response.Data[match] = histForecast.First(x => x.RecordDate == needHistoricalForecast[i].RecordDate);
+                    if (histForecast.Find(x => x.RecordDate == needHistoricalForecast[i].RecordDate) != null)
+                    {
+                        var match = response.Data.FindIndex(x => x.RecordDate == needHistoricalForecast[i].RecordDate);
+                        response.Data[match] = histForecast.First(x => x.RecordDate == needHistoricalForecast[i].RecordDate);
+                    }
+                    else
+                    {
+                        needHistoricalForecast[i].No_Data = true;
+                    }
                 }
             }
         }
@@ -176,7 +183,8 @@
         List<WeatherData> resp = new List<WeatherData>();
         for (var i = 0; i < obj.Length; i++)
         {
-            resp.Add(new WeatherData(obj[i], date.AddDays(i)));
+            DateOnly itemDate = DateOnly.FromDateTime(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(obj[i].Time));
+            resp.Add(new WeatherData(obj[i], itemDate));
         }
         return resp;
     }
