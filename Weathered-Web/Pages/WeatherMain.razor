@@ -126,7 +126,7 @@
 
             responseData = response.Data.OrderByDescending(x => x.RecordDate).Take(7).ToList();
 
-            response.Data.RemoveAt(response.Data.OrderByDescending(x => x.RecordDate).First().Is_Forecast ? 7 : 0); //cheeky
+            response.Data.RemoveAt(response.Data.OrderByDescending(x => x.RecordDate).First().Is_Forecast ? response.Data.Count - 1 : 0); //cheeky
 
             loading = false;
             StateHasChanged();

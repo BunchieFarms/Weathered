@@ -78,14 +78,22 @@ namespace Weathered_WebAPI.Business
                 ApiKey = _config["PirateApiKey"],
                 Location = new Location(pReq.Latitude, pReq.Longitude),
                 Time = new Time(daysAgo),
-                Include = [DataGroup.Daily]
+                Include = [DataGroup.Daily],
+                IsTimeMachine = true
             };
             var res = new PirateWeatherResponse();
             while(res.Daily == null || daysAgo < 0)
             {
-                req.Time = new Time(daysAgo);
-                res = await PirateForecast.GetAsync(req);
-                daysAgo -= 0.5;
+                try
+                {
+                    req.Time = new Time(daysAgo);
+                    res = await PirateForecast.GetAsync(req);
+                }
+                catch { }
+                finally
+                {
+                    daysAgo -= 0.5;
+                }
             }
             return res.Daily.Data.ToList();
         }
